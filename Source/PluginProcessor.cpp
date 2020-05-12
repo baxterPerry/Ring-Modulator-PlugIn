@@ -96,7 +96,7 @@ void Processing1AudioProcessor::changeProgramName (int index, const String& newN
 
 void Processing1AudioProcessor::updateAngleDelta()
 {
-    auto cyclesPerSample = 1500 / currentSampleRate; //= x/currentSampleRate ie 1000/currentSampleRate
+    auto cyclesPerSample = sinFreq/ currentSampleRate; //= x/currentSampleRate ie 1000/currentSampleRate
     angleDelta = cyclesPerSample * 2.0 * MathConstants<double>::pi;
 }
 
@@ -166,18 +166,13 @@ void Processing1AudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBu
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
-        
-        auto level = 0.02f;
-        
-        //auto* leftBuffer  = buffer.buffer->getWritePointer (getTotalNumOutputChannels(), buffer.startSamples);
-        //auto* rightBuffer = buffer.buffer->getWritePointer (getTotalNumOutputChannels(), buffer.startSamples);
-        
+                
         for (auto sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
             //const auto readPointer = buffer.getReadPointer(channel);
             auto currentSample = (float) std::sin (currentAngle);
             currentAngle += angleDelta;            
-            channelData[sample]  = currentSample * level;
+            channelData[sample]  = channelData[sample] * currentSample * mGain;
             //i have worked out i can control my level of the whole plugin with level
             //but i still cant hear any of the audiofile coming in *$%#$ >:[
         }

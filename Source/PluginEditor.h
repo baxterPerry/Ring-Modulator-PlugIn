@@ -16,7 +16,7 @@
 //==============================================================================
 /**
 */
-class Processing1AudioProcessorEditor  : public AudioProcessorEditor
+class Processing1AudioProcessorEditor  : public AudioProcessorEditor,                                                                 private Slider::Listener
 
 {
 public:
@@ -26,8 +26,11 @@ public:
     //==============================================================================
     void paint (Graphics&) override;
     void resized() override;
+    
+    Slider gainSlider;
     Slider freqSlider;
     Label freqSliderLabel;
+    void sliderValueChanged (Slider* slider) override ;
     
 
 private:
@@ -35,10 +38,11 @@ private:
     // access the processor object that created it.
     Processing1AudioProcessor& processor;
     Image background;
-    Slider gainSlider;
+
     Label gainSliderLabel;
     TextButton onOff;
     Label onOffLabel;
+
     
     
 

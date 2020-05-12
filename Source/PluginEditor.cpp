@@ -20,20 +20,24 @@ Processing1AudioProcessorEditor::Processing1AudioProcessorEditor (Processing1Aud
     setSize (400, 300);
     gainSlider.setSliderStyle(Slider::SliderStyle::LinearBarVertical);
     gainSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, 20, 200);
-    gainSlider.setRange(500.0f, 2500.0f, 3);
-    gainSlider.setTextValueSuffix(" Hz");
+    gainSlider.setRange(0.0f, 0.5f);
+    gainSlider.setNumDecimalPlacesToDisplay(2);
+    gainSlider.setTextValueSuffix(" Volume");
     addAndMakeVisible(gainSlider);
+    gainSlider.addListener(this);
     
     freqSlider.setSliderStyle(Slider::SliderStyle::LinearBarVertical);
     freqSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, 20, 200);
-    freqSlider.setRange(0.0f, 0.5f);
+    freqSlider.setRange(500.0f, 3000.0f);
     freqSlider.setNumDecimalPlacesToDisplay(2);
-    freqSlider.setTextValueSuffix("Gain");
+    freqSlider.setTextValueSuffix(" Hz");
+    freqSlider.setValue(1000.0f);
     addAndMakeVisible(freqSlider);
+    freqSlider.addListener(this);
+    
     
     onOff.changeWidthToFitText(20);
     addAndMakeVisible(onOff);
-    
     addAndMakeVisible(onOffLabel);
 
 
@@ -69,8 +73,9 @@ void Processing1AudioProcessorEditor::paint (Graphics& g)
     g.setColour(Colours::cornflowerblue);
     g.fillRect(0, 250, getWidth(), 10) ;
     g.setFont(Font::bold);
-    g.setColour(Colours::whitesmoke);
-    //g.drawText("bishyfkauldhjb", getWidth()/2, 1, 10, 100, 100);
+    g.setColour(Colours::black);
+    g.setFont(30.0f);
+    g.drawFittedText("Ring Modulator PlugIn", getLocalBounds(), Justification::centredTop + 1, 1);
     
 }
 
@@ -82,4 +87,18 @@ void Processing1AudioProcessorEditor::resized()
     onOffLabel.setBounds((getWidth()/2)-10, (getHeight()/2), 20, 20);
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
+}
+
+void Processing1AudioProcessorEditor::sliderValueChanged (Slider *slider)
+{
+    if (slider == &gainSlider)
+    {
+        processor.mGain = gainSlider.getValue();
+    }
+    
+    if (slider == &freqSlider)
+    {
+        processor.sinFreq = freqSlider.getValue();
+        processor.updateAngleDelta();
+    }
 }
