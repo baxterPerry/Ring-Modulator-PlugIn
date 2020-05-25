@@ -21,9 +21,29 @@ Processing1AudioProcessor::Processing1AudioProcessor()
                       #endif
                        .withOutput ("Output", AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ), parameters(*this, nullptr, Identifier("Ring Modulator"),
+                    {
+                        std::make_unique<AudioParameterFloat>("gain", //parameter ID
+                                                             "Gain",// parameter name
+                                                             0.1f,//min
+                                                             1.0f, //max
+                                                             0.5f //default value
+                                                             ),
+                        std::make_unique<AudioParameterFloat>("aFreq",
+                                                              "aFreq",
+                                                              1.0f,
+                                                              20.0f,
+                                                              5.0f)
+                           
+                    }
+                                     
+                                     )
 #endif
 {
+    //Initialization
+    gainParameter = parameters.getRawParameterValue("gain");
+    freqParameter = parameters.getRawParameterValue("Freq");
+
 }
 
 Processing1AudioProcessor::~Processing1AudioProcessor()
@@ -96,16 +116,22 @@ void Processing1AudioProcessor::changeProgramName (int index, const String& newN
 
 void Processing1AudioProcessor::updateAngleDelta()
 {
-    auto cyclesPerSample = sinFreq/ currentSampleRate; //= x/currentSampleRate ie 1000/currentSampleRate
+    auto cyclesPerSample = *freqParameter / currentSampleRate; //= x/currentSampleRate ie 1000/currentSampleRate
     angleDelta = cyclesPerSample * 2.0 * MathConstants<double>::pi;
 }
 
 void Processing1AudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     currentSampleRate = sampleRate;
+    //sinFreq.reset(sampleRate, 0.05f);
+    //thruZero = false;
     updateAngleDelta();
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    level.reset(sampleRate, 0.05f);
+    level.setTargetValue(0.5f);
+    sFreq.reset(sampleRate, 0.05f);
+    sFreq.setTargetValue(200.0f);
 }
 
 
@@ -146,33 +172,26 @@ void Processing1AudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBu
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
     //clears all excess input channels
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
+
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
                 
         for (auto sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
+            //float f = sinFreq.getNextValue();
             //const auto readPointer = buffer.getReadPointer(channel);
+            level.getNextValue();
+            sFreq.getNextValue();
             auto currentSample = (float) std::sin (currentAngle);
             currentAngle += angleDelta;            
-            channelData[sample]  = channelData[sample] * currentSample * mGain;
+            channelData[sample]  = channelData[sample] * currentSample * *gainParameter;
+            
             //i have worked out i can control my level of the whole plugin with level
             //but i still cant hear any of the audiofile coming in *$%#$ >:[
         }
@@ -190,12 +209,16 @@ bool Processing1AudioProcessor::hasEditor() const
 
 AudioProcessorEditor* Processing1AudioProcessor::createEditor()
 {
-    return new Processing1AudioProcessorEditor (*this);
+    return new Processing1AudioProcessorEditor (*this, parameters);
 }
 
 //==============================================================================
 void Processing1AudioProcessor::getStateInformation (MemoryBlock& destData)
 {
+    //GET CURRENT INFORMATION OF PLUGIN TO SAVE IT FOR FUTURE
+    auto state = parameters.copyState();
+    std::unique_ptr<XmlElement> xml (state.createXml());
+    copyXmlToBinary(*xml, destData);
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
@@ -203,6 +226,16 @@ void Processing1AudioProcessor::getStateInformation (MemoryBlock& destData)
 
 void Processing1AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
+    //SAVING DATA TO THE PLUGIN
+    std::unique_ptr<XmlElement> xmlState (getXmlFromBinary(data, sizeInBytes));
+    
+    if (xmlState.get() != nullptr)
+    {
+        if (xmlState ->hasTagName(parameters.state.getType()))
+        {
+            parameters.replaceState(ValueTree::fromXml(*xmlState));
+        }
+    }
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
 }

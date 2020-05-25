@@ -12,8 +12,8 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-Processing1AudioProcessorEditor::Processing1AudioProcessorEditor (Processing1AudioProcessor& p)
-    : AudioProcessorEditor (&p), processor (p)
+Processing1AudioProcessorEditor::Processing1AudioProcessorEditor (Processing1AudioProcessor& p, AudioProcessorValueTreeState& vts)
+    : AudioProcessorEditor (&p), processor (p), valueTreeState (vts)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -24,7 +24,8 @@ Processing1AudioProcessorEditor::Processing1AudioProcessorEditor (Processing1Aud
     gainSlider.setNumDecimalPlacesToDisplay(2);
     gainSlider.setTextValueSuffix(" Volume");
     addAndMakeVisible(gainSlider);
-    gainSlider.addListener(this);
+    gainAttachment.reset(new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "gain", gainSlider));
+    
     
     freqSlider.setSliderStyle(Slider::SliderStyle::LinearBarVertical);
     freqSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, 20, 200);
@@ -33,7 +34,8 @@ Processing1AudioProcessorEditor::Processing1AudioProcessorEditor (Processing1Aud
     freqSlider.setTextValueSuffix(" Hz");
     freqSlider.setValue(1000.0f);
     addAndMakeVisible(freqSlider);
-    freqSlider.addListener(this);
+    sFreqAttachment.reset(new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "sFreq", freqSlider));
+    
     
     
     onOff.changeWidthToFitText(20);
@@ -89,7 +91,7 @@ void Processing1AudioProcessorEditor::resized()
     // subcomponents in your editor..
 }
 
-void Processing1AudioProcessorEditor::sliderValueChanged (Slider *slider)
+/*void Processing1AudioProcessorEditor::sliderValueChanged (Slider *slider)
 {
     if (slider == &gainSlider)
     {
@@ -102,3 +104,4 @@ void Processing1AudioProcessorEditor::sliderValueChanged (Slider *slider)
         processor.updateAngleDelta();
     }
 }
+*/

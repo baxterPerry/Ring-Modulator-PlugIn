@@ -16,11 +16,11 @@
 //==============================================================================
 /**
 */
-class Processing1AudioProcessorEditor  : public AudioProcessorEditor,                                                                 private Slider::Listener
+class Processing1AudioProcessorEditor  : public AudioProcessorEditor
 
 {
 public:
-    Processing1AudioProcessorEditor (Processing1AudioProcessor&);
+    Processing1AudioProcessorEditor (Processing1AudioProcessor&, AudioProcessorValueTreeState& );
     ~Processing1AudioProcessorEditor();
 
     //==============================================================================
@@ -30,7 +30,6 @@ public:
     Slider gainSlider;
     Slider freqSlider;
     Label freqSliderLabel;
-    void sliderValueChanged (Slider* slider) override ;
     
 
 private:
@@ -38,6 +37,11 @@ private:
     // access the processor object that created it.
     Processing1AudioProcessor& processor;
     Image background;
+    AudioProcessorValueTreeState& valueTreeState;
+    
+    //making an object of type <x> and naming it;
+    std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> gainAttachment;
+    std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> sFreqAttachment;
 
     Label gainSliderLabel;
     TextButton onOff;

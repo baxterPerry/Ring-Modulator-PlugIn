@@ -56,17 +56,26 @@ public:
     //==============================================================================
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
-    double level;
-    double currentSampleRate = 0.0, currentAngle = 0.0, angleDelta = 0.0;
 
-    //Wanted to be able to make Slider control the level of the sinOsc
-    //float gainSliderValue {0.1f};
-    float sinFreq {1000.0};
-    float mGain {0.1};
+    
+    
+
 
 
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Processing1AudioProcessor)
+    AudioProcessorValueTreeState parameters;
+    std::atomic<float>* gainParameter = nullptr;
+    std::atomic<float>* freqParameter = nullptr;
+    SmoothedValue<float> level;
+    SmoothedValue<float> sFreq;
+   
+    //double level;
+    double currentSampleRate = 0.0, currentAngle = 0.0, angleDelta = 0.0;
+
     
+    //float gainSliderValue {0.1f};
+    float sinFreq {1000.0};
+    //float mGain {0.1};
 };
